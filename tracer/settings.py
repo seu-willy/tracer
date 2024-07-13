@@ -55,7 +55,7 @@ ROOT_URLCONF = 'tracer.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
+        'DIRS': []
         ,
         'APP_DIRS': True,
         'OPTIONS': {
@@ -121,8 +121,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# 需要自己配置SMS短信服务
-SMS = 0
+# 需要自己配置邮箱发送服务
+MY_EMAIL = ''
+MY_PASSWORD = ''
+EMAIL_HOST = ''
 
 try:
     from .local_settings import *
