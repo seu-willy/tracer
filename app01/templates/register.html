@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="{% static '/plugins/bootstrap-3.4.1/css/bootstrap.min.css' %}">
+    <style>
+        .register {
+            width: 300px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+<div class="register">
+    <h2 style="text-align: center; font-weight: bolder">注册</h2>
+    <form id="rg_form" method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            {% if field.label == '验证码' %}
+                <div class="form-group" style="margin-bottom: 0">
+                    <label>{{ field.label }}</label>
+                </div>
+                <div class="clearfix">
+                    <div class="col-xs-6" style="padding-left: 0">
+                        {{ field }}
+                    </div>
+                    <div class="col-xs-6 clearfix" style="padding-right: 0">
+                        <button id="code_button" class="btn btn-default" >点击获取验证码</button>
+                    </div>
+                </div>
+            {% else %}
+                <div class="form-group">
+                    <label>{{ field.label }}</label>
+                    {{ field }}
+                </div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit" class="btn btn-primary" style="margin-top: 15px">提交</button>
+    </form>
+</div>
+<script src="{% static 'js/jQuery.js' %}"></script>
+<script src="{% static 'plugins/bootstrap-3.4.1/js/bootstrap.min.js' %}"></script>
+<script type="text/javascript">
+    $(function () {
+        sendCodeEvent();
+    })
+    function sendCodeEvent() {
+        $("#code_button").click(function () {
+            $.ajax({
+                url:"/app01/sendcode/?type=register",
+                type:"post",
+                datatype:"json",
+                data:$("#rg_form").serialize(),
+                success:function (res) {
+                    console.log(res)
+                }
+            })
+        })
+    }
+    
+</script>
+</body>
+</html>
