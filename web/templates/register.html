@@ -1,0 +1,45 @@
+{% extends "layout/basic.html" %}
+{% load static %}
+{% block title %}
+
+{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/account.css' %}">
+{% endblock %}
+{% block content %}
+    <div class="account">
+        <div class="title">注册</div>
+        <form id="rg_form" method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                {% if field.label == '验证码' %}
+                    <div class="form-group" style="margin-bottom: 0">
+                        <label>{{ field.label }}</label>
+                    </div>
+                    <div class="clearfix">
+                        <div class="col-xs-6" style="padding-left: 0">
+                            {{ field }}
+                        </div>
+                        <div class="col-xs-6 clearfix" style="padding-right: 0">
+                            <button id="code_button" class="btn btn-default">点击获取验证码</button>
+                        </div>
+
+                    </div>
+                    <span style="color: red">{{ field.errors.0 }}</span>
+                {% else %}
+                    <div class="form-group">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        <span style="color: red">{{ field.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+            <button type="submit" class="btn btn-primary" style="margin-top: 15px">提交</button>
+        </form>
+    </div>
+
+{% endblock %}
+{% block js %}
+
+{% endblock %}
+

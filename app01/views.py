@@ -48,7 +48,7 @@ class UserInfo(forms.ModelForm):
 def register(request):
     if request.method == "GET":
         form = UserInfo()
-        return render(request, "register.html", {'form':form})
+        return render(request, "app01/register.html", {'form':form})
     form2 = UserInfo(data=request.POST)
     if form2.is_valid():
         code_input = form2.cleaned_data.get('code')
@@ -57,7 +57,7 @@ def register(request):
         print(code_row)
         if str(code_input) != str(code_row):
             form2.add_error('code', '验证码错误')
-            return render(request, "register.html", {'form': form2})
+            return render(request, "app01/register.html", {'form': form2})
         form2.save()
         return HttpResponse('注册成功')
-    return render(request, "register.html", {'form':form2})
+    return render(request, "app01/register.html", {'form':form2})
