@@ -27,13 +27,16 @@
                         {{ field }}
                     </div>
                     <div class="col-xs-6 clearfix" style="padding-right: 0">
-                        <button id="code_button" class="btn btn-default" >点击获取验证码</button>
+                        <button id="code_button" class="btn btn-default">点击获取验证码</button>
                     </div>
+
                 </div>
+                <span style="color: red">{{ field.errors.0 }}</span>
             {% else %}
                 <div class="form-group">
                     <label>{{ field.label }}</label>
                     {{ field }}
+                    <span style="color: red">{{ field.errors.0 }}</span>
                 </div>
             {% endif %}
         {% endfor %}
@@ -46,20 +49,21 @@
     $(function () {
         sendCodeEvent();
     })
+
     function sendCodeEvent() {
         $("#code_button").click(function () {
             $.ajax({
-                url:"/app01/sendcode/?type=register",
-                type:"post",
-                datatype:"json",
-                data:$("#rg_form").serialize(),
-                success:function (res) {
+                url: "/app01/sendcode/?type=register",
+                type: "post",
+                datatype: "json",
+                data: $("#rg_form").serialize(),
+                success: function (res) {
                     console.log(res)
                 }
             })
         })
     }
-    
+
 </script>
 </body>
 </html>
