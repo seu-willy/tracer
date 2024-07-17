@@ -5,41 +5,119 @@
 {% endblock %}
 {% block css %}
     <link rel="stylesheet" href="{% static 'css/account.css' %}">
+    <style>
+        .account .error-msg {
+            color: red;
+            font-size: 12px;
+            position: absolute;
+        }
+    </style>
 {% endblock %}
 {% block content %}
     <div class="account">
-        <div class="title">注册</div>
-        <form id="rg_form" method="post">
+        <div class="title">{{ title }}</div>
+        <form id="rg_form" method="post" novalidate>
             {% csrf_token %}
             {% for field in form %}
-                {% if field.label == '验证码' %}
-                    <div class="form-group" style="margin-bottom: 0">
-                        <label>{{ field.label }}</label>
-                    </div>
-                    <div class="clearfix">
-                        <div class="col-xs-6" style="padding-left: 0">
-                            {{ field }}
+                {% if field.name == 'code' %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        <div class="row clearfix">
+                            <div class="col-xs-7">
+                                {{ field }}
+                                <span class="error-msg">{{ field.errors.0 }}</span>
+                            </div>
+                            <div class="col-xs-5">
+                                <input style="width: 100%" type="buttom" id="code_button" class="btn btn-default"
+                                       value="点击获取验证码">
+                            </div>
                         </div>
-                        <div class="col-xs-6 clearfix" style="padding-right: 0">
-                            <button id="code_button" class="btn btn-default">点击获取验证码</button>
-                        </div>
-
                     </div>
-                    <span style="color: red">{{ field.errors.0 }}</span>
                 {% else %}
                     <div class="form-group">
-                        <label>{{ field.label }}</label>
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
-                        <span style="color: red">{{ field.errors.0 }}</span>
+                        <span class="error-msg">{{ field.errors.0 }}</span>
                     </div>
                 {% endif %}
             {% endfor %}
-            <button type="submit" class="btn btn-primary" style="margin-top: 15px">提交</button>
+
+            <input id="btnSubmit" type="button" class="btn btn-primary" value="注  册">
         </form>
     </div>
 
 {% endblock %}
 {% block js %}
+    <script type="text/javascript">
+        $(function () {
+            bindSendCode();
+            bindClickSubmit();
+        })
 
+        /*绑定发送验证码事件*/
+        function bindSendCode() {
+            $('#code_button').click(function () {
+                $(".error-msg").empty()
+                //获取邮箱
+                var email = $('#id_email').val()  //modelform会生成id_+name的属性
+                $.ajax({
+                    url: "{% url 'send_code' %}",  //反向解析URL 等价于 /send/code/
+                    type: 'GET',
+                    data: {email: email, type: 'register'},
+                    datatype: 'JSON',
+                    success: function (res) {
+                        if (res.status) {
+                            console.log('发送成功')
+                            codeClock()
+                        } else {
+                            $.each(res.error, function (name, error_lst) {
+                                console.log(res)   //{"status": false,"error": {"email": ["输入一个有效的 Email 地址。"]}}
+                                $("#id_" + name).next().text(error_lst[0]);
+                            })
+                        }
+                    }
+                })
+            })
+        }
+
+        /*绑定倒计时事件*/
+        function codeClock() {
+            var codeButton = $("#code_button");
+            codeButton.prop('disabled', true); //禁用
+            var time = 60;
+            var remind = setInterval(function () {
+                codeButton.val(time + '秒重新发送');
+                time = time - 1;
+                if (time < 1) {
+                    clearInterval(remind);
+                    codeButton.val('点击获取验证码').prop('disabled', false)
+                }
+            }, 1000)
+        }
+
+        /*注册提交*/
+        function bindClickSubmit() {
+            $("#btnSubmit").click(function () {
+                $(".error-msg").empty()
+                //收集数据,发送到后台
+                $.ajax({
+                    url:"{% url 'register' %}",
+                    type:"POST",
+                    data:$("#rg_form").serialize(),
+                    datatype:'JSON',
+                    success:function (res) {
+                        if(res.status){
+                            location.href = res.data  //跳转到了/login/
+                        }else{
+                            $.each(res.error, function (name, error_lst) {
+                                console.log(res)   //{"status": false,"error": {"email": ["输入一个有效的 Email 地址。"]}}
+                                $("#id_" + name).next().text(error_lst[0]);
+                            })
+                        }
+                    }
+                })
+            })
+        }
+    </script>
 {% endblock %}
 
