@@ -1,13 +1,16 @@
 import random
+
+import requests
+
 from web import models
 from django import forms
 from utils.encrypt import md5
 from django.core.validators import ValidationError, RegexValidator
 from utils.send_code import send_msg
 from django_redis import get_redis_connection
+from web.forms.BootstrapForm import BootstrapForm
 
-
-class RegisterModelForm(forms.ModelForm):
+class RegisterModelForm(BootstrapForm, forms.ModelForm):
     password = forms.CharField(
         label="密码",
         min_length=8,
@@ -67,15 +70,44 @@ class RegisterModelForm(forms.ModelForm):
         if code_input.strip() != redis_str_code:
             raise ValidationError('验证码错误，请重新输入')
         return code_input
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
-            if field.widget.attrs:
-                field.widget.attrs['class'] = 'form-control'
-                field.widget.attrs['placeholder'] = field.label
-            else:
-                field.widget.attrs = {'class': 'form-control', 'placeholder': field.label}
 
+class LoginCodeForm(BootstrapForm, forms.Form):
+    email = forms.EmailField(label='邮箱')
+    code = forms.CharField(label='验证码', widget=forms.TextInput())
+
+    def clean_code(self):
+        email = self.cleaned_data.get('email')
+        code_input = self.cleaned_data.get('code')
+        coon = get_redis_connection('default')
+        redis_code = coon.get(email)
+        if not redis_code:
+            raise ValidationError('验证码失效或未发送，请重新发送')
+        redis_str_code = redis_code.decode('utf-8')
+        if code_input.strip() != redis_str_code:
+            raise ValidationError('验证码错误，请重新输入')
+        return code_input
+
+class LoginForm(BootstrapForm, forms.Form):
+    username = forms.CharField(label='用户名或邮箱')
+    password = forms.CharField(label='密码', widget=forms.PasswordInput(render_value=True))
+    code = forms.CharField(label='图片验证码')
+
+    def __init__(self,request, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request = request
+
+    def clean_password(self):
+        pwd = self.cleaned_data.get('password')
+        return md5(pwd)
+
+    def clean_code(self):
+        code_input = self.cleaned_data.get('code')
+        code_session = self.request.session.get('image_code')
+        if not code_session:
+            raise ValidationError('验证码已过期，请重新获取')
+        if code_input.strip().upper() != code_session.strip().upper():
+            raise ValidationError('验证码输入错误')
+        return code_input
 
 # class SendCodeForm(forms.Form):
 #     type = forms.CharField(label='类型')  # form中把需要校验的字段都建立，但是因为表单里没有type栏，所以type的结果也并到了email里
@@ -102,14 +134,18 @@ class SendCodeForm(forms.Form):
         self.request = request
 
     def clean_email(self):
-        # 判断邮箱是否已经存在
         email_input = self.cleaned_data.get('email')
-        exists = models.UserInfo.objects.filter(email=email_input).exists()
-        if exists:
-            raise ValidationError("邮箱已注册！")
-
-        # 判断模板是否正确
         type_input = self.request.GET.get('type')
+        # 判断邮箱是否已经存在（注册时需要邮箱不存在，登录时需要邮箱存在）
+        exists = models.UserInfo.objects.filter(email=email_input).exists()
+        if type_input == 'register':
+            if exists:
+                raise ValidationError("邮箱已注册！")
+        else:
+            if not exists:
+                raise ValidationError("邮箱未注册，请注册后再登录！")
+        # 判断模板是否正确
+
         if type_input not in ['register', 'login', 'reset']:
             raise ValidationError('模板格式错误')
 

@@ -1,7 +1,7 @@
 {% extends "layout/basic.html" %}
 {% load static %}
 {% block title %}
-用户注册
+    邮箱登录
 {% endblock %}
 {% block css %}
     <link rel="stylesheet" href="{% static 'css/account.css' %}">
@@ -15,8 +15,8 @@
 {% endblock %}
 {% block content %}
     <div class="account">
-        <div class="title">用户注册</div>
-        <form id="rg_form" method="post" novalidate>
+        <div class="title">邮箱登录</div>
+        <form id="login_form" method="post" novalidate>
             {% csrf_token %}
             {% for field in form %}
                 {% if field.name == 'code' %}
@@ -42,10 +42,12 @@
                 {% endif %}
             {% endfor %}
 
-            <input id="btnSubmit" type="button" class="btn btn-primary" value="注  册">
+            <input id="btnSubmit" type="button" class="btn btn-primary" value="登  录">
+        <div style="float: right;margin-top: 5px">
+            <a href="{% url 'login' %}">用户名密码登录？</a>
+        </div>
         </form>
     </div>
-
 {% endblock %}
 {% block js %}
     <script type="text/javascript">
@@ -63,7 +65,7 @@
                 $.ajax({
                     url: "{% url 'send_code' %}",  //反向解析URL 等价于 /send/code/
                     type: 'GET',
-                    data: {email: email, type: 'register'},
+                    data: {email: email, type: 'login'},
                     datatype: 'JSON',
                     success: function (res) {
                         if (res.status) {
@@ -101,9 +103,9 @@
                 $(".error-msg").empty()
                 //收集数据,发送到后台
                 $.ajax({
-                    url:"{% url 'register' %}",
+                    url:"{% url 'login_code' %}",  //等价于/login/code/
                     type:"POST",
-                    data:$("#rg_form").serialize(),
+                    data:$("#login_form").serialize(),
                     datatype:'JSON',
                     success:function (res) {
                         if(res.status){
@@ -120,4 +122,3 @@
         }
     </script>
 {% endblock %}
-
