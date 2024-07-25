@@ -1,14 +1,98 @@
 {% extends 'layout/manage.html' %}
 {% block css %}
     <style>
-    .project{
-        margin-top: 10px;
-    }
+        .project {
+            margin-top: 10px;
+        }
     </style>
 {% endblock %}
 {% block content %}
-<div class="container-fluid project">
+    <div class="container-fluid project">
+        <a class="btn btn-primary" data-toggle="modal" data-target="#addModal">
+            <i class="fa fa-plus-circle" aria-hidden="true"></i> 新建项目
+        </a>
+        <div class="panel panel-default" style="margin-top: 10px">
+            <div class="panel-heading"><i class="fa fa-star" aria-hidden="true"></i>星标项目</div>
+            <div class="panel-body">
+                {% for item in project_dict.star %}
+                    <div>{{ item.name }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><i class="fa fa-list" aria-hidden="true"></i>我创建的项目</div>
+            <div class="panel-body">
+                {% for item in project_dict.my %}
+                    <div>{{ item.name }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><i class="fa fa-handshake-o" aria-hidden="true"></i>我参与的项目</div>
+            <div class="panel-body">
+                {% for item in project_dict.join %}
+                    <div>{{ item.name }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">新建项目</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addForm">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                <span class="error-msg"></span>
+                            </div>
+                        {% endfor %}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button id="btnSubmit" type="button" class="btn btn-primary">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <a class="btn btn-primary"><i class="fa fa-plus-circle" aria-hidden="true"></i>  新建项目</a>
-</div>
+
+{% endblock %}
+{% block js %}
+    <script type="text/javascript">
+        $(function () {
+            bindSubmit();
+        });
+
+        function bindSubmit() {
+            $("#btnSubmit").click(function () {
+                $(".error-msg").empty()
+                $.ajax({
+                    url: "{% url 'project_list' %}",
+                    type: "POST",
+                    data: $("#addForm").serialize(),
+                    datatype: 'JSON',
+                    success: function (res) {
+                        if (res.status) {
+                            location.reload()
+                        } else {
+                            $.each(res.error, function (name, error_lst) {
+                                $("#id_" + name).next().text(error_lst[0]);
+                            })
+                        }
+                    }
+                })
+            })
+        }
+
+    </script>
 {% endblock %}

@@ -74,8 +74,6 @@ def login(request):
             request.session.set_expiry(60 * 60 * 24 * 14)
             return redirect('/index/')
         form.add_error('username', '用户名或密码错误')
-        print('执行了添加错误')
-    print(form.errors)
     return render(request, 'login.html', {'form': form})
 
 
@@ -87,9 +85,7 @@ def logout(request):
 
 def send_code(request):
     '''发送邮箱验证码'''
-    print(request.GET)
     form = SendCodeForm(request, request.GET)
-    print(form)
     if form.is_valid():
         return JsonResponse({'status': True})
     return JsonResponse({'status': False, 'error': form.errors})
@@ -100,8 +96,6 @@ def image_code(request):
     img, code_string = check_code()  # 调用函数生成验证码和图片
     request.session['image_code'] = code_string  # 将验证码写入session，方便在登录的地方验证，有点像实例属性，大家都能用
     request.session.set_expiry(60)  # 给session设置时长，这里是为了避免验证图片一直有效
-
-    print(code_string)
     stream = BytesIO()
     img.save(stream, 'png')
 
