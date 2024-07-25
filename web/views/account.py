@@ -1,6 +1,8 @@
 '''
 用户相关的功能：注册、登录、注销
 '''
+import datetime
+import uuid
 from django.shortcuts import render, HttpResponse, redirect
 from django.http import JsonResponse
 from web.forms.account import RegisterModelForm, SendCodeForm, LoginCodeForm, LoginForm
@@ -21,9 +23,21 @@ def register(request):
         # 验证通过，写入数据库
         # instance = form.save()  save会把数据库没有的字段剔除
         # instance = models.UserInfo.objects.create(**form.cleaned_data)
-        form.save()
-        return JsonResponse({'status': True, 'data': '/login/'})
+        instance = form.save()
 
+        # 创建交易记录
+        price_object = models.PriceStrategy.objects.filter(category=1, title='个人免费版').first()
+        models.TradeInfo.objects.create(
+            oid=uuid.uuid4(),
+            status=2,
+            user=instance,
+            price_strategy=price_object,
+            count=0,
+            pay=0,
+            start_time=datetime.datetime.now(),
+        )
+
+        return JsonResponse({'status': True, 'data': '/login/'})
     return JsonResponse({'status': False, 'error': form.errors})
 
 
@@ -64,10 +78,12 @@ def login(request):
     print(form.errors)
     return render(request, 'login.html', {'form': form})
 
+
 def logout(request):
     '''退出登录'''
     request.session.clear()
     return redirect('index')
+
 
 def send_code(request):
     '''发送邮箱验证码'''
