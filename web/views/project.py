@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, HttpResponse
 from web.forms.project import ProjectModelForm
 from django.http import JsonResponse
 from web import models
@@ -16,12 +16,12 @@ def project_list(request):
 
         for row in my_project_list:
             if row.star:
-                project_dict['star'].append(row)
+                project_dict['star'].append({'value': row, 'type': 'my'})
             else:
                 project_dict['my'].append(row)
         for item in join_project_list:
             if item.star:
-                project_dict['star'].append(item.project)
+                project_dict['star'].append({'value': item.project, 'type': 'join'})
             else:
                 project_dict['join'].append(item.project)
         form = ProjectModelForm(request)
@@ -34,3 +34,23 @@ def project_list(request):
         form.save()
         return JsonResponse({'status': True})
     return JsonResponse({'status': False, 'error': form.errors})
+
+
+def project_star(request, project_type, project_id):
+    if project_type == 'my':
+        models.ProjectInfo.objects.filter(id=project_id, creator=request.tracer.user).update(star=True)
+        return redirect('project_list')
+    if project_type == 'join':
+        models.ProjectTeamInfo.objects.filter(project_id=project_id, user=request.tracer.user).update(star=True)
+        return redirect('project_list')
+    return HttpResponse('出错了')
+
+
+def project_unstar(request, project_type, project_id):
+    if project_type == 'my':
+        models.ProjectInfo.objects.filter(id=project_id, creator=request.tracer.user).update(star=False)
+        return redirect('project_list')
+    if project_type == 'join':
+        models.ProjectTeamInfo.objects.filter(project_id=project_id, user=request.tracer.user).update(star=False)
+        return redirect('project_list')
+    return HttpResponse('出错了')
